@@ -29,7 +29,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf dist .tsbuildinfo && tsc && gulp build:icons",
+    "build": "rm -rf dist .tsbuildinfo && tsc && node scripts/copy-assets.mjs",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint --no-error-on-unmatched-pattern nodes credentials package.json",
@@ -58,7 +58,6 @@
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-n8n-nodes-base": "^1.16.3",
-    "gulp": "^4.0.2",
     "jest": "^29.7.0",
     "n8n-workflow": "*",
     "prettier": "^3.3.0",
