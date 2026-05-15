@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (n8n community-node ESLint preset)
+        run: npm run lint
+
+      - name: Typecheck and build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      # Note: `npx @n8n/scan-community-package` requires the package to be
+      # already published to the npm registry. It runs in release.yml after
+      # `npm publish` completes. Local equivalents (the n8n-nodes-base ESLint
+      # community preset + the prepublish-strict preset) are run above.
