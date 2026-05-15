@@ -215,29 +215,7 @@ export class LeadrSpace implements INodeType {
 				routing: { send: { type: 'query', property: 'per_page' } },
 			},
 
-			// Fields for Contact > Create
-			{
-				displayName: 'First Name',
-				name: 'firstName',
-				type: 'string',
-				required: true,
-				default: '',
-				displayOptions: { show: { resource: ['contact'], operation: ['create'] } },
-				routing: { send: { type: 'body', property: 'first_name' } },
-			},
-			{
-				displayName: 'Phone',
-				name: 'phone',
-				type: 'string',
-				required: true,
-				default: '',
-				placeholder: '+212600000000',
-				description: 'Contact phone number in E.164 format',
-				displayOptions: { show: { resource: ['contact'], operation: ['create'] } },
-				routing: { send: { type: 'body', property: 'phone' } },
-			},
-
-			// Fields for Contact > Update + Delete (UUID path param)
+			// Required fields for Contact > Create + Update
 			{
 				displayName: 'Contact UUID',
 				name: 'uuid',
@@ -249,15 +227,14 @@ export class LeadrSpace implements INodeType {
 					show: { resource: ['contact'], operation: ['update', 'delete'] },
 				},
 			},
-
-			// Fields for Contact > Update (body)
 			{
 				displayName: 'First Name',
 				name: 'firstName',
 				type: 'string',
+				required: true,
 				default: '',
-				description: 'New first name (leave empty to keep unchanged)',
-				displayOptions: { show: { resource: ['contact'], operation: ['update'] } },
+				description: "Contact's first name (maxLength 255)",
+				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
 				routing: { send: { type: 'body', property: 'first_name' } },
 			},
 			{
@@ -267,9 +244,87 @@ export class LeadrSpace implements INodeType {
 				required: true,
 				default: '',
 				placeholder: '+212600000000',
-				description: 'Contact phone number in E.164 format',
-				displayOptions: { show: { resource: ['contact'], operation: ['update'] } },
+				description: 'Contact phone number in E.164 format (maxLength 255)',
+				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
 				routing: { send: { type: 'body', property: 'phone' } },
+			},
+
+			// Optional fields (alphabetized for n8n-nodes-base lint rule)
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['contact'], operation: ['create', 'update'] } },
+				options: [
+					{
+						displayName: 'City',
+						name: 'city',
+						type: 'string',
+						default: '',
+						description: 'City (maxLength 255)',
+						routing: { send: { type: 'body', property: 'city' } },
+					},
+					{
+						displayName: 'Country',
+						name: 'country',
+						type: 'string',
+						default: '',
+						description: 'Country (maxLength 255)',
+						routing: { send: { type: 'body', property: 'country' } },
+					},
+					{
+						displayName: 'Email',
+						name: 'email',
+						type: 'string',
+						placeholder: 'name@example.com',
+						default: '',
+						description: "Contact's email address (maxLength 255)",
+						routing: { send: { type: 'body', property: 'email' } },
+					},
+					{
+						displayName: 'Group UUIDs',
+						name: 'group',
+						type: 'string',
+						typeOptions: { multipleValues: true, multipleValueButtonText: 'Add group UUID' },
+						default: [],
+						description: 'Contact group UUIDs to assign this contact to',
+						routing: { send: { type: 'body', property: 'group' } },
+					},
+					{
+						displayName: 'Last Name',
+						name: 'lastName',
+						type: 'string',
+						default: '',
+						description: "Contact's last name (maxLength 255)",
+						routing: { send: { type: 'body', property: 'last_name' } },
+					},
+					{
+						displayName: 'State',
+						name: 'state',
+						type: 'string',
+						default: '',
+						description: 'State or province (maxLength 255)',
+						routing: { send: { type: 'body', property: 'state' } },
+					},
+					{
+						displayName: 'Street',
+						name: 'street',
+						type: 'string',
+						default: '',
+						description: 'Street address (maxLength 255)',
+						routing: { send: { type: 'body', property: 'street' } },
+					},
+					{
+						displayName: 'Zip',
+						name: 'zip',
+						type: 'string',
+						default: '',
+						description: 'Postal or ZIP code (maxLength 20)',
+						routing: { send: { type: 'body', property: 'zip' } },
+					},
+				],
 			},
 
 			// ─── Operation: Pipeline ─────────────────────────────────────

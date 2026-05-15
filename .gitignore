@@ -17,3 +17,10 @@ Thumbs.db
 coverage/
 .idea/
 .vscode/
+.specify/
+.claude/
+specs/
+webhooks-examples/
+*.tgz
+api-docs
+.gitignore
