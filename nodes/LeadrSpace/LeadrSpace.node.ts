@@ -1,0 +1,437 @@
+import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
+
+export class LeadrSpace implements INodeType {
+	description: INodeTypeDescription = {
+		displayName: 'Leadr Space',
+		name: 'leadrSpace',
+		icon: 'file:leadrspace.svg',
+		group: ['transform'],
+		version: 1,
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		description: 'Interact with the Leadr Space API',
+		defaults: {
+			name: 'Leadr Space',
+		},
+		inputs: ['main'],
+		outputs: ['main'],
+		credentials: [
+			{
+				name: 'leadrSpaceApi',
+				required: true,
+			},
+		],
+		requestDefaults: {
+			baseURL: 'https://leadr.space',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
+			},
+		},
+		properties: [
+			// ─── Resource picker ──────────────────────────────────────────
+			{
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{ name: 'Contact', value: 'contact' },
+					{ name: 'Message', value: 'message' },
+					{ name: 'Pipeline', value: 'pipeline' },
+					{ name: 'Template', value: 'template' },
+				],
+				default: 'message',
+			},
+
+			// ─── Operation: Message ──────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['message'] } },
+				options: [
+					{
+						name: 'Send',
+						value: 'send',
+						action: 'Send a text message',
+						description: 'Send a WhatsApp text message to a contact',
+						routing: { request: { method: 'POST', url: '/api/send' } },
+					},
+					{
+						name: 'Send Media',
+						value: 'sendMedia',
+						action: 'Send a media message',
+						description: 'Send a WhatsApp media message (image, video, document, audio)',
+						routing: { request: { method: 'POST', url: '/api/send/media' } },
+					},
+				],
+				default: 'send',
+			},
+
+			// Fields for Message > Send
+			{
+				displayName: 'Phone',
+				name: 'phone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '+212600000000',
+				description: 'Recipient phone number in E.164 format',
+				displayOptions: { show: { resource: ['message'], operation: ['send', 'sendMedia'] } },
+				routing: { send: { type: 'body', property: 'phone' } },
+			},
+			{
+				displayName: 'Message',
+				name: 'message',
+				type: 'string',
+				typeOptions: { rows: 3 },
+				required: true,
+				default: '',
+				description: 'The text body to send',
+				displayOptions: { show: { resource: ['message'], operation: ['send'] } },
+				routing: { send: { type: 'body', property: 'message' } },
+			},
+
+			// Fields for Message > Send Media
+			{
+				displayName: 'Media Type',
+				name: 'mediaType',
+				type: 'options',
+				required: true,
+				default: 'image',
+				description: 'The type of media to send',
+				displayOptions: { show: { resource: ['message'], operation: ['sendMedia'] } },
+				options: [
+					{ name: 'Image', value: 'image' },
+					{ name: 'Video', value: 'video' },
+					{ name: 'Document', value: 'document' },
+					{ name: 'Audio', value: 'audio' },
+				],
+				routing: { send: { type: 'body', property: 'media_type' } },
+			},
+			{
+				displayName: 'Media URL',
+				name: 'mediaUrl',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'https://example.com/file.jpg',
+				description: 'Public URL of the media file',
+				displayOptions: { show: { resource: ['message'], operation: ['sendMedia'] } },
+				routing: { send: { type: 'body', property: 'media_url' } },
+			},
+			{
+				displayName: 'Caption',
+				name: 'caption',
+				type: 'string',
+				required: true,
+				default: '',
+				description: 'Caption text shown alongside the media',
+				displayOptions: { show: { resource: ['message'], operation: ['sendMedia'] } },
+				routing: { send: { type: 'body', property: 'caption' } },
+			},
+			{
+				displayName: 'File Name',
+				name: 'fileName',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'invoice.pdf',
+				description: 'The file name to display to the recipient',
+				displayOptions: { show: { resource: ['message'], operation: ['sendMedia'] } },
+				routing: { send: { type: 'body', property: 'file_name' } },
+			},
+
+			// ─── Operation: Contact ──────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['contact'] } },
+				options: [
+					{
+						name: 'Create',
+						value: 'create',
+						action: 'Create a contact',
+						description: 'Create a new contact in Leadr Space',
+						routing: { request: { method: 'POST', url: '/api/contacts' } },
+					},
+					{
+						name: 'Delete',
+						value: 'delete',
+						action: 'Delete a contact',
+						description: 'Delete a contact by UUID',
+						routing: {
+							request: {
+								method: 'DELETE',
+								url: '=/api/contacts/{{$parameter.uuid}}',
+							},
+						},
+					},
+					{
+						name: 'Get Many',
+						value: 'list',
+						action: 'List contacts',
+						description: 'Retrieve a paginated list of contacts',
+						routing: { request: { method: 'GET', url: '/api/contacts' } },
+					},
+					{
+						name: 'Update',
+						value: 'update',
+						action: 'Update a contact',
+						description: "Update an existing contact's fields",
+						routing: {
+							request: {
+								method: 'PUT',
+								url: '=/api/contacts/{{$parameter.uuid}}',
+							},
+						},
+					},
+				],
+				default: 'list',
+			},
+
+			// Fields for Contact > List
+			{
+				displayName: 'Page',
+				name: 'page',
+				type: 'number',
+				default: 1,
+				typeOptions: { minValue: 1 },
+				description: '1-based page number to fetch',
+				displayOptions: { show: { resource: ['contact'], operation: ['list'] } },
+				routing: { send: { type: 'query', property: 'page' } },
+			},
+			{
+				displayName: 'Per Page',
+				name: 'perPage',
+				type: 'number',
+				default: 50,
+				typeOptions: { minValue: 1, maxValue: 100 },
+				description: 'Items per page (max 100)',
+				displayOptions: { show: { resource: ['contact'], operation: ['list'] } },
+				routing: { send: { type: 'query', property: 'per_page' } },
+			},
+
+			// Fields for Contact > Create
+			{
+				displayName: 'First Name',
+				name: 'firstName',
+				type: 'string',
+				required: true,
+				default: '',
+				displayOptions: { show: { resource: ['contact'], operation: ['create'] } },
+				routing: { send: { type: 'body', property: 'first_name' } },
+			},
+			{
+				displayName: 'Phone',
+				name: 'phone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '+212600000000',
+				description: 'Contact phone number in E.164 format',
+				displayOptions: { show: { resource: ['contact'], operation: ['create'] } },
+				routing: { send: { type: 'body', property: 'phone' } },
+			},
+
+			// Fields for Contact > Update + Delete (UUID path param)
+			{
+				displayName: 'Contact UUID',
+				name: 'uuid',
+				type: 'string',
+				required: true,
+				default: '',
+				description: 'The UUID of the contact to update or delete',
+				displayOptions: {
+					show: { resource: ['contact'], operation: ['update', 'delete'] },
+				},
+			},
+
+			// Fields for Contact > Update (body)
+			{
+				displayName: 'First Name',
+				name: 'firstName',
+				type: 'string',
+				default: '',
+				description: 'New first name (leave empty to keep unchanged)',
+				displayOptions: { show: { resource: ['contact'], operation: ['update'] } },
+				routing: { send: { type: 'body', property: 'first_name' } },
+			},
+			{
+				displayName: 'Phone',
+				name: 'phone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '+212600000000',
+				description: 'Contact phone number in E.164 format',
+				displayOptions: { show: { resource: ['contact'], operation: ['update'] } },
+				routing: { send: { type: 'body', property: 'phone' } },
+			},
+
+			// ─── Operation: Pipeline ─────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['pipeline'] } },
+				options: [
+					{
+						name: 'Get Many',
+						value: 'list',
+						action: 'List pipelines',
+						description: 'Retrieve all pipelines with their stages',
+						routing: { request: { method: 'POST', url: '/api/pipelines' } },
+					},
+				],
+				default: 'list',
+			},
+
+			// ─── Operation: Template ─────────────────────────────────────
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: { show: { resource: ['template'] } },
+				options: [
+					{
+						name: 'Get',
+						value: 'get',
+						action: 'Get a template',
+						description: 'Retrieve a single template by UUID',
+						routing: {
+							request: {
+								method: 'GET',
+								url: '=/api/templates/{{$parameter.templateUuid}}',
+							},
+						},
+					},
+					{
+						name: 'Get Many',
+						value: 'list',
+						action: 'List templates',
+						description: 'Retrieve all approved templates',
+						routing: { request: { method: 'GET', url: '/api/templates' } },
+					},
+					{
+						name: 'Send',
+						value: 'send',
+						action: 'Send a template message',
+						description: 'Send a WhatsApp template message to a contact',
+						routing: { request: { method: 'POST', url: '/api/send/template' } },
+					},
+				],
+				default: 'list',
+			},
+
+			// Fields for Template > Get
+			{
+				displayName: 'Template UUID',
+				name: 'templateUuid',
+				type: 'string',
+				required: true,
+				default: '',
+				description: 'The UUID of the template to fetch',
+				displayOptions: { show: { resource: ['template'], operation: ['get'] } },
+			},
+
+			// Fields for Template > Send
+			{
+				displayName: 'Template Name',
+				name: 'templateName',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: 'order_confirmation',
+				description: 'The approved template name (must match exactly)',
+				displayOptions: { show: { resource: ['template'], operation: ['send'] } },
+				routing: { send: { type: 'body', property: 'name' } },
+			},
+			{
+				displayName: 'Phone',
+				name: 'phone',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '+212600000000',
+				description: 'Recipient phone number in E.164 format',
+				displayOptions: { show: { resource: ['template'], operation: ['send'] } },
+				routing: { send: { type: 'body', property: 'phone' } },
+			},
+			{
+				displayName: 'Body',
+				name: 'body',
+				type: 'json',
+				default:
+					'{\n  "text": "Hello {{1}}, your order {{2}} is ready.",\n  "parameters": [\n    { "type": "text", "selection": "static", "value": "John" },\n    { "type": "text", "selection": "static", "value": "12345" }\n  ]\n}',
+				description: 'Template body configuration. See the Leadr Space API docs for the full schema.',
+				displayOptions: { show: { resource: ['template'], operation: ['send'] } },
+				routing: { send: { type: 'body', property: 'body' } },
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				displayOptions: { show: { resource: ['template'], operation: ['send'] } },
+				options: [
+					{
+						displayName: 'Buttons (JSON Array)',
+						name: 'buttons',
+						type: 'json',
+						default: '',
+						description: 'Array of template button objects',
+						routing: { send: { type: 'body', property: 'buttons' } },
+					},
+					{
+						displayName: 'Email',
+						name: 'email',
+						type: 'string',
+						placeholder: 'name@example.com',
+						default: '',
+						description: 'Used when the contact does not yet exist',
+						routing: { send: { type: 'body', property: 'email' } },
+					},
+					{
+						displayName: 'First Name',
+						name: 'first_name',
+						type: 'string',
+						default: '',
+						description: 'Used when the contact does not yet exist',
+						routing: { send: { type: 'body', property: 'first_name' } },
+					},
+					{
+						displayName: 'Footer (JSON)',
+						name: 'footer',
+						type: 'json',
+						default: '',
+						description: 'Template footer configuration ({"value": "..."} )',
+						routing: { send: { type: 'body', property: 'footer' } },
+					},
+					{
+						displayName: 'Header (JSON)',
+						name: 'header',
+						type: 'json',
+						default: '',
+						description: 'Template header configuration. See the Leadr Space API docs for the schema.',
+						routing: { send: { type: 'body', property: 'header' } },
+					},
+					{
+						displayName: 'Last Name',
+						name: 'last_name',
+						type: 'string',
+						default: '',
+						description: 'Used when the contact does not yet exist',
+						routing: { send: { type: 'body', property: 'last_name' } },
+					},
+				],
+			},
+		],
+	};
+}

@@ -1,16 +1,25 @@
 # n8n-nodes-leadrspace
 
-An [n8n](https://n8n.io/) community node that lets your workflows react in real time to
-events from your [Leadr Space](https://leadr.space) account — a WhatsApp Business API SaaS
-platform for MENA SMBs.
+An [n8n](https://n8n.io/) community node package for [Leadr Space](https://leadr.space) —
+a WhatsApp Business API SaaS platform for MENA SMBs.
 
 [![n8n.io](https://img.shields.io/badge/community%20node-n8n-FF6D5A)](https://docs.n8n.io/integrations/community-nodes/installation/)
 [![npm version](https://img.shields.io/npm/v/n8n-nodes-leadrspace)](https://www.npmjs.com/package/n8n-nodes-leadrspace)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-> **v1 scope** — one trigger node, four event types, manual webhook URL setup. v1 does not
-> ship credentials or signature verification. See the [Roadmap](#roadmap) for what's coming
-> next.
+The package ships **two nodes** and **one credential type**:
+
+- **Leadr Space Trigger** — receive real-time events via webhook (manual URL setup; no
+  credential required).
+- **Leadr Space** — send messages / media / templates and manage contacts, pipelines, and
+  templates. Requires the Leadr Space API credential.
+- **Leadr Space API** — API key credential used by the action node and (in a future
+  release) by automatic webhook registration in the trigger.
+
+> **v0.2.0 scope** — trigger with manual webhook URL setup + action node with the
+> Message / Contact / Pipeline / Template resources. HMAC signature verification on inbound
+> webhooks and automatic webhook subscription management are deferred to v0.3.x. See the
+> [Roadmap](#roadmap).
 
 ---
 
@@ -49,6 +58,52 @@ npm link n8n-nodes-leadrspace
 
 # Restart n8n
 ```
+
+---
+
+## Credential setup (for the action node)
+
+The **Leadr Space** action node requires an API key. The **Leadr Space Trigger** does NOT
+require credentials in this release.
+
+1. In your Leadr Space dashboard → **Settings → API** → generate an API key.
+2. In n8n, open **Credentials → New** → search "Leadr Space API".
+3. Paste the API key into the **API Key** field and click **Save**.
+4. n8n hits `GET /api/verify` on your behalf — a green "Connection successful" indicator
+   means the key is valid; `401 Invalid API key.` means it isn't.
+
+The API key is stored encrypted by n8n. It is sent as
+`Authorization: Bearer <api-key>` on every request from the action node.
+
+---
+
+## Using the action node
+
+Drop the **Leadr Space** node onto a workflow and pick a Resource + Operation:
+
+| Resource    | Operations                                          | Endpoints                                                                 |
+|-------------|-----------------------------------------------------|---------------------------------------------------------------------------|
+| Message     | Send, Send Media                                    | `POST /api/send`, `POST /api/send/media`                                  |
+| Contact     | Get Many, Create, Update, Delete                    | `GET/POST /api/contacts`, `PUT/DELETE /api/contacts/{uuid}`               |
+| Pipeline    | Get Many                                            | `POST /api/pipelines`                                                     |
+| Template    | Get Many, Get, Send                                 | `GET /api/templates`, `GET /api/templates/{uuid}`, `POST /api/send/template` |
+
+For the **Template > Send** operation, the `Body` field expects a JSON object matching
+Leadr Space's template body schema:
+
+```json
+{
+  "text": "Hello {{1}}, your order {{2}} is ready.",
+  "parameters": [
+    { "type": "text", "selection": "static", "value": "John" },
+    { "type": "text", "selection": "static", "value": "12345" }
+  ]
+}
+```
+
+Optional `Header (JSON)`, `Footer (JSON)`, and `Buttons (JSON Array)` fields under
+**Additional Fields** let you build full template messages. See the Leadr Space API docs
+for the exact schemas.
 
 ---
 
@@ -242,20 +297,28 @@ stored in a database or KV cache, or use the n8n **Schedule + dedupe** community
 
 ## Roadmap
 
-The following are deliberately deferred from v1 and are tracked on the v1.1 milestone:
+Already shipped in v0.2.0:
 
-- **HMAC signature verification** on inbound deliveries — closes the URL-as-secret gap.
+- ✅ **API key credentials** stored via n8n's encrypted credential mechanism with
+  `GET /api/verify` as the connection test.
+- ✅ **Action node** with Message / Contact / Pipeline / Template resources.
+
+Deferred to v0.3.x:
+
+- **HMAC signature verification** on inbound webhook deliveries — closes the URL-as-secret
+  gap. Blocked on Leadr Space publishing the signature header name and algorithm.
 - **Timestamp + replay protection** (≈5-minute freshness window).
-- **API key credentials** stored via n8n's encrypted credential mechanism.
-- **Automatic webhook registration** on workflow activation (no more manual paste).
+- **Automatic webhook registration** on workflow activation. Blocked on Leadr Space
+  publishing webhook-subscription management endpoints.
 - **Automatic webhook removal** on workflow deactivation or deletion.
 
-Further deferred (v2+):
+Further deferred (v0.4+):
 
-- Action nodes (send message, send template, create contact, update contact, …).
-- Additional event types: `message.status.update`, `contact.deleted`, `group.*`,
+- Additional action-node resources: **Contact Groups**, **Leads**, **Products**, **Teams**
+  (endpoints already exist in the Leadr Space API; not yet wired up here).
+- Additional trigger event types: `message.status.update`, `contact.deleted`, `group.*`,
   `auto_reply.*`, `lead.created`, `product.created`.
-- OAuth2 authentication.
+- OAuth2 authentication (if and when Leadr Space supports it).
 
 ---
 

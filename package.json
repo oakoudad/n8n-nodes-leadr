@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-leadrspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "n8n community node for receiving real-time webhook events from Leadr Space (WhatsApp Business API SaaS for MENA SMBs).",
   "keywords": [
     "n8n-community-node-package",
@@ -29,7 +29,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "build": "tsc && gulp build:icons",
+    "build": "rm -rf dist .tsbuildinfo && tsc && gulp build:icons",
     "dev": "tsc --watch",
     "format": "prettier nodes credentials --write",
     "lint": "eslint --no-error-on-unmatched-pattern nodes credentials package.json",
@@ -44,9 +44,12 @@
   ],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "credentials": [],
+    "credentials": [
+      "dist/credentials/LeadrSpaceApi.credentials.js"
+    ],
     "nodes": [
-      "dist/nodes/LeadrSpaceTrigger/LeadrSpaceTrigger.node.js"
+      "dist/nodes/LeadrSpaceTrigger/LeadrSpaceTrigger.node.js",
+      "dist/nodes/LeadrSpace/LeadrSpace.node.js"
     ]
   },
   "devDependencies": {
