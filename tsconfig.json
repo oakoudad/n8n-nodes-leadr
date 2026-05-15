@@ -25,14 +25,14 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo",
     "removeComments": true,
     "useUnknownInCatchVariables": true
   },
   "include": [
     "nodes/**/*",
     "credentials/**/*",
-    "index.ts",
-    "package.json"
+    "index.ts"
   ],
   "exclude": [
     "node_modules",
