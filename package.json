@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-leadrspace",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "n8n community node for receiving real-time webhook events from Leadr Space (WhatsApp Business API SaaS for MENA SMBs).",
   "keywords": [
     "n8n-community-node-package",
